@@ -1,11 +1,12 @@
-FROM fedora:28
+FROM fedora:29
 LABEL maintainer="Justin Murray <justin@murrayju.com>"
 
-RUN  dnf install -y http://download.zfsonlinux.org/epel/zfs-release.el7_5.noarch.rpm \
+RUN  dnf install -y http://download.zfsonlinux.org/fedora/zfs-release$(rpm -E %dist).noarch.rpm \
   && dnf update -y \
   && dnf install -y \
       gpg \
       kernel-devel \
+      smartmontools \
       zfs \
   && dnf clean all --enablerepo=\*
 
@@ -21,16 +22,18 @@ RUN set -ex \
     DD8F2338BAE7501E3DD5AC78C273792F7D83545D \
     C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8 \
     B9AE9905FFD7803F25714661B63B535A4C206CA9 \
-    56730D5401028683275BD23C23EFEFE93C4CFFFE \
     77984A986EBC2AA786BC0F66B01FBB92821C587A \
     8FCCA13FEF1D0C2E91008E09770F7A9A5AE15600 \
+    4ED778F539E3634C779C87C6D7062848A1AB005C \
+    A48C2BEE680E841632CD4E44F07496B3EB3C1762 \
+    B9E2F5981AA6E0CD28160D9FF13993A75599653C \
   ; do \
     gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys "$key" || \
     gpg --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys "$key" || \
     gpg --keyserver hkp://pgp.mit.edu:80 --recv-keys "$key" ; \
   done
 
-ENV NODE_VERSION 10.5.0
+ENV NODE_VERSION 12.3.1
 
 RUN ARCH= && dpkgArch="$(arch)" \
   && case "${dpkgArch}" in \
@@ -49,7 +52,7 @@ RUN ARCH= && dpkgArch="$(arch)" \
   && rm "node-v$NODE_VERSION-linux-$ARCH.tar.xz" SHASUMS256.txt.asc SHASUMS256.txt \
   && ln -s /usr/local/bin/node /usr/local/bin/nodejs
 
-ENV YARN_VERSION 1.7.0
+ENV YARN_VERSION 1.16.0
 
 RUN set -ex \
   && for key in \
@@ -67,11 +70,5 @@ RUN set -ex \
   && ln -s /opt/yarn-v$YARN_VERSION/bin/yarn /usr/local/bin/yarn \
   && ln -s /opt/yarn-v$YARN_VERSION/bin/yarnpkg /usr/local/bin/yarnpkg \
   && rm yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz
-
-# Bleeding edge smartmontools with json output support
-ENV SMARTMON_VERSION 6.7-0-20180621-r4735
-RUN curl -fsSLO --compressed "https://builds.smartmontools.org/r4735/smartmontools-${SMARTMON_VERSION}.linux-x86_64.tar.gz" \
-  && tar -xzf smartmontools-${SMARTMON_VERSION}.linux-x86_64.tar.gz -C / \
-  && rm smartmontools-${SMARTMON_VERSION}.linux-x86_64.tar.gz
 
 CMD [ "node" ]
